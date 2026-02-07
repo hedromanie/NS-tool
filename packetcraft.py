@@ -8,12 +8,176 @@ import time
 import os
 import socket
 
+class Theme:
+    def __init__(self, root):
+        self.root = root
+        self.current_theme = "dark"
+        self.setup_themes()
+        
+    def setup_themes(self):
+        self.themes = {
+            "light": {
+                "primary_bg": "#ffffff",
+                "secondary_bg": "#f8f9fa", 
+                "primary_fg": "#212529",
+                "secondary_fg": "#000000",
+                "accent": "#000000",
+                "success": "#28a745",
+                "warning": "#ffc107",
+                "danger": "#dc3545",
+                "border": "#dee2e6",
+                "input_bg": "#ffffff",
+                "input_fg": "#212529",
+                "button_bg": "#4D4D4D",
+                "button_fg": "#ffffff",
+                "tree_bg": "#ffffff",
+                "tree_fg": "#212529",
+                "tree_selected": "#4D4D4D",
+                "text_bg": "#ffffff",
+                "text_fg": "#212529",
+                "window_bg": "#ffffff"
+            },
+            "dark": {
+                "primary_bg": "#1a1a1a",
+                "secondary_bg": "#2d2d2d",
+                "primary_fg": "#e9ecef", 
+                "secondary_fg": "#000000",
+                "accent": "#000000",
+                "success": "#198754",
+                "warning": "#ffca2c",
+                "danger": "#dc3545",
+                "border": "#495057",
+                "input_bg": "#2d2d2d",
+                "input_fg": "#e9ecef",
+                "button_bg": "#4D4D4D",
+                "button_fg": "#ffffff",
+                "tree_bg": "#2d2d2d",
+                "tree_fg": "#e9ecef",
+                "tree_selected": "#4D4D4D",
+                "text_bg": "#2d2d2d",
+                "text_fg": "#e9ecef",
+                "window_bg": "#1a1a1a"
+            }
+        }
+    
+    def apply_theme(self, theme_name):
+        if theme_name not in self.themes:
+            return
+        
+        self.current_theme = theme_name
+        theme = self.themes[theme_name]
+        
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        style.configure(".", 
+                       background=theme["primary_bg"],
+                       foreground=theme["primary_fg"],
+                       fieldbackground=theme["input_bg"],
+                       selectbackground=theme["accent"],
+                       font=('Arial', 9))
+        
+        self.root.configure(bg=theme["window_bg"])
+        self.root.tk_setPalette(
+            background=theme["window_bg"],
+            foreground=theme["primary_fg"],
+            activeBackground=theme["accent"],
+            activeForeground=theme["button_fg"]
+        )
+        
+        style.configure("TFrame", background=theme["primary_bg"])
+        style.configure("TLabel", background=theme["primary_bg"], foreground=theme["primary_fg"], font=('Arial', 9))
+        style.configure("TLabelframe", background=theme["secondary_bg"], foreground=theme["primary_fg"])
+        style.configure("TLabelframe.Label", background=theme["secondary_bg"], foreground=theme["primary_fg"], font=('Arial', 9))
+        
+        style.configure("TButton", 
+                       background=theme["button_bg"],
+                       foreground=theme["button_fg"],
+                       focuscolor=theme["accent"],
+                       padding=(6, 3), 
+                       font=('Arial', 9),
+                       wraplength=150)
+        style.map("TButton",
+                 background=[('active', theme["accent"]),
+                           ('pressed', theme["accent"])])
+        
+        style.configure("TEntry",
+                       fieldbackground=theme["input_bg"],
+                       foreground=theme["input_fg"],
+                       insertcolor=theme["input_fg"],
+                       font=('Arial', 9))
+        
+        style.configure("TCombobox",
+                       fieldbackground=theme["input_bg"],
+                       foreground=theme["input_fg"],
+                       background=theme["button_bg"],
+                       font=('Arial', 9))
+        
+        style.configure("TCheckbutton",
+                       background=theme["primary_bg"],
+                       foreground=theme["primary_fg"])
+        
+        style.configure("TNotebook", background=theme["secondary_bg"])
+        style.configure("TNotebook.Tab",
+                       background=theme["secondary_bg"],
+                       foreground=theme["secondary_fg"])
+        style.map("TNotebook.Tab",
+                 background=[('selected', theme["primary_bg"])],
+                 foreground=[('selected', theme["primary_fg"])])
+        
+        style.configure("Treeview",
+                       background=theme["tree_bg"],
+                       foreground=theme["tree_fg"],
+                       fieldbackground=theme["tree_bg"])
+        style.map("Treeview", background=[('selected', theme["tree_selected"])])
+        
+        style.configure("TScrollbar",
+                       background=theme["secondary_bg"],
+                       troughcolor=theme["primary_bg"],
+                       arrowcolor=theme["primary_fg"])
+        
+        self.apply_to_widgets(self.root, theme)
+        
+    def apply_to_widgets(self, widget, theme):
+        try:
+            widget_type = widget.winfo_class()
+            
+            if widget_type in ("Frame", "Labelframe", "LabelFrame"):
+                widget.config(bg=theme["primary_bg"])
+            elif widget_type == "Label":
+                widget.config(bg=theme["primary_bg"], fg=theme["primary_fg"], font=('Arial', 9))
+            elif widget_type == "Button":
+                widget.config(bg=theme["button_bg"], fg=theme["button_fg"],
+                            activebackground=theme["accent"], font=('Arial', 9),
+                            padx=8, pady=3, wraplength=150)
+            elif widget_type == "Entry":
+                widget.config(bg=theme["input_bg"], fg=theme["input_fg"],
+                            insertbackground=theme["input_fg"], font=('Arial', 9))
+            elif widget_type == "Text":
+                widget.config(bg=theme["text_bg"], fg=theme["text_fg"],
+                            insertbackground=theme["text_fg"], font=('Arial', 9))
+            elif widget_type == "Scrollbar":
+                widget.config(bg=theme["secondary_bg"], troughcolor=theme["primary_bg"])
+            elif widget_type == "Listbox":
+                widget.config(bg=theme["input_bg"], fg=theme["input_fg"], font=('Arial', 9))
+            elif widget_type == "Canvas":
+                widget.config(bg=theme["primary_bg"])
+                
+        except Exception:
+            pass
+        
+        for child in widget.winfo_children():
+            self.apply_to_widgets(child, theme)
+
 class PacketCraftingTool:
     def __init__(self, root):
         self.root = root
         self.root.title("Packet Crafting Tool")
         self.root.geometry("800x700")
         root.iconbitmap("images.ico")
+        
+        # Инициализация темы
+        self.theme_manager = Theme(self.root)
         
         self.center_window()
         self.show_warning()
@@ -46,6 +210,9 @@ class PacketCraftingTool:
         
         self.setup_ui()
         
+        # Применяем тему по умолчанию
+        self.theme_manager.apply_theme("dark")
+        
     def center_window(self):
         self.root.update_idletasks()
         width = self.root.winfo_width()
@@ -70,11 +237,22 @@ class PacketCraftingTool:
         messagebox.showwarning("Предупреждение безопасности", warning_text)
         
     def setup_ui(self):
+        # Панель управления темой
+        theme_frame = ttk.Frame(self.root)
+        theme_frame.pack(fill='x', padx=10, pady=(5, 0))
+        
+        ttk.Label(theme_frame, text="Тема:").pack(side='left', padx=(0, 5))
+        ttk.Button(theme_frame, text="Светлая", 
+                  command=lambda: self.theme_manager.apply_theme("light"),
+                  width=10).pack(side='left', padx=2)
+        ttk.Button(theme_frame, text="Темная", 
+                  command=lambda: self.theme_manager.apply_theme("dark"),
+                  width=10).pack(side='left', padx=2)
+        
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill='both', expand=True, padx=10, pady=10)
 
         ttk.Label(main_frame, text="Сетевой интерфейс:").grid(row=0, column=0, sticky='w', pady=8, padx=5)
-        # Меняем на обычный Combobox (без readonly) для ручного ввода любых интерфейсов
         self.iface_combo = ttk.Combobox(main_frame, width=30)
         self.iface_combo.grid(row=0, column=1, sticky='ew', pady=8, padx=5, columnspan=2)
         
@@ -83,7 +261,7 @@ class PacketCraftingTool:
         ttk.Label(main_frame, text="Протокол:").grid(row=1, column=0, sticky='w', pady=5, padx=5)
         protocol_combo = ttk.Combobox(main_frame, textvariable=self.protocol_var, 
                                     values=["TCP", "UDP", "ICMP", "ARP", "RAW"], 
-                                    state="readonly", width=20)
+                                    width=20)
         protocol_combo.grid(row=1, column=1, sticky='w', pady=5, padx=5)
         protocol_combo.bind('<<ComboboxSelected>>', self.on_protocol_change)
         
